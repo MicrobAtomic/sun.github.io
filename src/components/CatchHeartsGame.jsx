@@ -35,7 +35,7 @@ export default function CatchHeartsGame({ onWin }) {
   useEffect(() => {
     const audio = new Audio(adventureBegins);
     audio.loop = true;
-    audio.volume = 0.26;
+    audio.volume = 0.20;
     audio.currentTime = 50;
     audio.play().catch(() => {});
 

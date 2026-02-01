@@ -43,6 +43,7 @@ export default function BreakChainsGame({ onWin }) {
     const audio = new Audio(demonsCrest);
     audio.loop = true;
     audio.volume = 0.45;
+    audio.currentTime = 2;
     audio.play().catch(() => {});
     return () => {
       audio.pause();
@@ -193,8 +194,10 @@ export default function BreakChainsGame({ onWin }) {
     }, {});
   }
 
-  const seconds = Math.ceil(timeLeft / 1000);
-  const guardSeconds = Math.ceil(guardLeft / 1000);
+  const seconds = Math.floor(timeLeft / 1000);
+  const millis = Math.floor((timeLeft % 1000) / 10);
+  const guardSeconds = Math.floor(guardLeft / 1000);
+  const guardMillis = Math.floor((guardLeft % 1000) / 10);
   const guardProgress = Math.min(guardHits / GUARD_HITS, 1);
   const guardHealthPct = Math.max(0, Math.round(100 * (1 - guardProgress ** 2)));
 
@@ -224,7 +227,7 @@ export default function BreakChainsGame({ onWin }) {
       {phase === "guard" && (
         <>
           <p className="sub">Un garde surgit ! Clique vite pour le repousser.</p>
-          <div className="timerBig">⏱️ {guardSeconds}s</div>
+          <div className="timerBig">⏱️ {guardSeconds}.{String(guardMillis).padStart(2, "0")}s</div>
           <div className="guardArea">
             <button
               className="guardHitbox"
@@ -244,7 +247,7 @@ export default function BreakChainsGame({ onWin }) {
       {phase === "chains" && (
         <>
           <p className="sub">Casse les chaînes avant la fin du chrono !</p>
-          <div className="timerBig">⏱️ {seconds}s</div>
+          <div className="timerBig">⏱️ {seconds}.{String(millis).padStart(2, "0")}s</div>
 
           <div className="qteBar">
             <div className="qteSweet" />
