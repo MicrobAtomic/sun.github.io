@@ -17,6 +17,8 @@
   box-shadow: 0 12px 30px rgba(0,0,0,0.12);
   z-index: 2;
   text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
 .hero h1 {
@@ -173,6 +175,181 @@
 
 .fallingHeart:active {
   transform: translate(-50%, -50%) scale(0.9);
+}
+
+
+.chainCard {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.chainArea {
+  width: min(420px, 80vw);
+  height: 180px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 240, 246, 0.7);
+  border-radius: 16px;
+}
+
+.chainHeart {
+  display: grid;
+  gap: 8px;
+  place-items: center;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.chains {
+  font-size: 28px;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.heartBomb {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.toolRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.toolBtn.active {
+  outline: 2px solid rgba(255, 0, 120, 0.5);
+}
+
+.toolBtn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chestRow {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.chest.opened {
+  background: rgba(255, 240, 246, 0.6);
+}
+
+.guardArea {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.guardBar {
+  width: min(320px, 70vw);
+  height: 10px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.guardBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff2f92, #ff6fb3);
+  transition: width 120ms ease;
+}
+
+.guardSprite {
+  width: min(520px, 80vw);
+  height: auto;
+  image-rendering: pixelated;
+}
+
+
+.guardHitbox {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  animation: guard-in 0.6s ease-out forwards;
+}
+
+.guardHitbox:active .guardSprite {
+  animation: guard-hit 0.15s linear;
+}
+
+.screamer {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 64px;
+  color: #ff2f92;
+  background: rgba(0,0,0,0.6);
+  z-index: 10;
+  animation: shake 0.4s linear;
+}
+
+.qteBar {
+  width: min(420px, 80vw);
+  height: 12px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.qteSweet {
+  position: absolute;
+  left: 45%;
+  width: 10%;
+  height: 100%;
+  background: rgba(255, 0, 120, 0.35);
+}
+
+.qteNeedle {
+  position: absolute;
+  top: -4px;
+  width: 12px;
+  height: 20px;
+  background: #ff2f92;
+  border-radius: 6px;
+  transform: translateX(-50%);
+}
+
+.timerBig {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ff2f92;
+  background: rgba(255, 240, 246, 0.8);
+  padding: 6px 14px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+@keyframes shake {
+  0% { transform: translate(0); }
+  25% { transform: translate(6px, -6px); }
+  50% { transform: translate(-6px, 6px); }
+  75% { transform: translate(6px, 6px); }
+  100% { transform: translate(0); }
+}
+
+
+@keyframes guard-in {
+  0% { transform: translateX(-60vw); opacity: 0.2; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes guard-hit {
+  0% { transform: scale(1) rotate(0deg); }
+  40% { transform: scale(calc(0.92 * var(--hit-scale, 1))) rotate(-2deg); }
+  70% { transform: scale(calc(1.06 * var(--hit-scale, 1))) rotate(2deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 
 @keyframes heart-shrink {

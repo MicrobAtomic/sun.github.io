@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import adventureBegins from "../sounds/Adventure Begins  (16-Bit Arcade No Copyright Music).mp3";
 
 const TARGET = 10;
 const SPAWN_MS = 450;
@@ -28,6 +29,19 @@ export default function CatchHeartsGame({ onWin }) {
 
     return () => {
       clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = new Audio(adventureBegins);
+    audio.loop = true;
+    audio.volume = 0.26;
+    audio.currentTime = 50;
+    audio.play().catch(() => {});
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
     };
   }, []);
 

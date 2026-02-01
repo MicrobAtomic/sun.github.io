@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import mazeSound from "../sounds/maze_sound.m4a";
 import tile000 from "../assets/sprite/tile000.png";
 import tile001 from "../assets/sprite/tile001.png";
 import tile002 from "../assets/sprite/tile002.png";
@@ -78,6 +79,18 @@ export default function HeartMazeGame({ onWin }) {
   useEffect(() => {
     if (collected) onWin();
   }, [collected, onWin]);
+
+  useEffect(() => {
+    const audio = new Audio(mazeSound);
+    audio.loop = true;
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, []);
 
   useEffect(() => {
     function handleKey(e) {
