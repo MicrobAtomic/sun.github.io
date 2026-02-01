@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
-export function clamp(n, a, b) {
+let lastMoveTime = 0;
+
+function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
 
-export function rand(min, max) {
+function rand(min, max) {
   return Math.random() * (max - min) + min;
+}
+
+function canMove() {
+  const now = performance.now();
+  if (now - lastMoveTime < 140) return false;
+  lastMoveTime = now;
+  return true;
 }
 
 export function useNoButton() {
@@ -18,8 +27,9 @@ export function useNoButton() {
     labelIndex: 0,
   });
 
-  function move({ page, btn, intensity = 1 }) {
+  const move = useCallback(({ page, btn, event, intensity = 1 }) => {
     if (!page || !btn) return;
+    if (!canMove()) return;
 
     const p = page.getBoundingClientRect();
     const b = btn.getBoundingClientRect();
@@ -32,43 +42,53 @@ export function useNoButton() {
 
     if (maxX <= minX || maxY <= minY) return;
 
-    let best = { x: rand(minX, maxX), y: rand(minY, maxY) };
-    let bestScore = -Infinity;
+    setState((s) => {
+      const cx = s.x + b.width / 2;
+      const cy = s.y + b.height / 2;
 
-    for (let i = 0; i < 25; i++) {
-      const x = rand(minX, maxX);
-      const y = rand(minY, maxY);
+      const mx = event?.clientX ?? p.left + p.width / 2;
+      const my = event?.clientY ?? p.top + p.height / 2;
 
-      const dist = Math.hypot(x - state.lastX, y - state.lastY);
-      const edge = Math.min(x - minX, maxX - x, y - minY, maxY - y);
+      let dx = cx - (mx - p.left);
+      let dy = cy - (my - p.top);
 
-      const score = dist - (edge < 40 ? 200 : 0);
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len;
+      dy /= len;
 
-      if (score > bestScore) {
-        bestScore = score;
-        best = { x, y };
+      const jump = 160 + Math.random() * 120;
+
+      let nx = s.x + dx * jump;
+      let ny = s.y + dy * jump;
+
+      nx = clamp(nx, minX, maxX);
+      ny = clamp(ny, minY, maxY);
+
+      if (Math.hypot(nx - s.x, ny - s.y) < 80) {
+        nx = rand(minX, maxX);
+        ny = rand(minY, maxY);
       }
-    }
 
-    setState((s) => ({
-      ...s,
-      x: best.x,
-      y: best.y,
-      lastX: best.x,
-      lastY: best.y,
-      rotate: s.rotate + rand(-20, 20) * intensity,
-      labelIndex: (s.labelIndex + 1) % 10,
-    }));
-  }
+      return {
+        ...s,
+        x: nx,
+        y: ny,
+        lastX: nx,
+        lastY: ny,
+        rotate: s.rotate + rand(-12, 12) * intensity,
+        labelIndex: (s.labelIndex + 1) % 10,
+      };
+    });
+  }, []);
 
-  function placeNearYes({ page, yes, btn }) {
+  const placeNearYes = useCallback(({ page, yes, btn }) => {
     if (!page || !yes || !btn) return;
 
     const p = page.getBoundingClientRect();
     const y = yes.getBoundingClientRect();
     const n = btn.getBoundingClientRect();
 
-    if (!n.width) return;
+    if (!n.width || !n.height) return;
 
     const gap = 14;
     const x = clamp(y.left - p.left + y.width + gap, 16, p.width - n.width - 16);
@@ -83,7 +103,7 @@ export function useNoButton() {
       rotate: 0,
       labelIndex: 0,
     }));
-  }
+  }, []);
 
   return { state, move, placeNearYes };
 }

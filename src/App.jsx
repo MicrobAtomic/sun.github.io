@@ -56,10 +56,11 @@ export default function App() {
             noRef={noRef}
             state={state}
             labels={labels}
-            onMove={() =>
+            onMove={(e) =>
               move({
                 page: pageRef.current,
                 btn: noRef.current,
+                event: e,
                 intensity: 1,
               })
             }
@@ -68,11 +69,11 @@ export default function App() {
               move({
                 page: pageRef.current,
                 btn: noRef.current,
+                event: e,
                 intensity: 1.6,
               });
             }}
           />
-
           <div className="card hero">
             <h1>Will you be my valentine?</h1>
             <p className="sub">
@@ -84,10 +85,6 @@ export default function App() {
                 Yes 💘
               </button>
             </div>
-
-            <p className="small tip">
-              Tip: try to approach “No” slowly… it doesn’t like that.
-            </p>
           </div>
         </>
       )}

@@ -8,12 +8,13 @@ export default function NoButton({
   return (
     <button
       ref={noRef}
-      className="btn no floatingNo"
+      className="btn floatingNo"
       style={{
         transform: `translate(${state.x}px, ${state.y}px) rotate(${state.rotate}deg)`,
       }}
       onMouseEnter={onMove}
       onMouseMove={onMove}
+      onFocus={onMove}
       onPointerEnter={onMove}
       onPointerDown={onMove}
       onClick={onClick}
