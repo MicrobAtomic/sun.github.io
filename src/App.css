@@ -16,6 +16,7 @@
   padding: 24px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.12);
   z-index: 2;
+  text-align: center;
 }
 
 .hero h1 {
@@ -25,6 +26,7 @@
 .row {
   display: flex;
   gap: 14px;
+  justify-content: center;
 }
 
 .btn {
@@ -48,4 +50,138 @@
   background: #f0f0f0;
   border: 1px solid rgba(0,0,0,0.15);
   z-index: 5;
+}
+
+.mazeCard {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.maze {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 16px;
+  background: #cfe9c4;
+  border: 2px solid rgba(0,0,0,0.08);
+}
+
+.tile {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ground,
+.wall {
+  position: absolute;
+  inset: 0;
+}
+
+.ground {
+  background-image: url("./assets/ground.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+.wall {
+  background-image: url("./assets/wall.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+  z-index: 1;
+  inset: -4px;
+}
+
+.grass {
+  background: linear-gradient(145deg, #7fd37c, #6bc268);
+}
+
+.bush {
+  background: linear-gradient(145deg, #2e7d32, #1b5e20);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+.player {
+  font-size: 18px;
+}
+
+.heart {
+  font-size: 18px;
+}
+
+.playerSprite {
+  width: 38px;
+  height: 38px;
+  image-rendering: pixelated;
+  position: relative;
+  z-index: 2;
+}
+
+.heartSprite {
+  width: 30px;
+  height: 30px;
+  image-rendering: pixelated;
+  position: relative;
+  z-index: 2;
+}
+
+.catchArea {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.catchScreen {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.catchOverlay {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.fallingHeart {
+  position: absolute;
+  border: none;
+  background: transparent;
+  font-size: 32px;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: transform 80ms ease;
+  animation: heart-shrink 1.2s linear forwards;
+}
+
+.fallingHeart:active {
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+@keyframes heart-shrink {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0;
+  }
 }

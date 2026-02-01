@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import NoButton from "./components/NoButton";
+import HeartMazeGame from "./components/HeartMazeGame";
+import CatchHeartsGame from "./components/CatchHeartsGame";
 import { useNoButton } from "./hooks/useNoButton";
 
 export default function App() {
@@ -42,9 +44,20 @@ export default function App() {
       });
     });
 
+    function onResize() {
+      placeNearYes({
+        page: pageRef.current,
+        yes: yesRef.current,
+        btn: noRef.current,
+      });
+    }
+
+    window.addEventListener("resize", onResize);
+
     return () => {
       cancelAnimationFrame(r1);
       cancelAnimationFrame(r2);
+      window.removeEventListener("resize", onResize);
     };
   }, [mode, placeNearYes]);
 
@@ -81,12 +94,30 @@ export default function App() {
             </p>
 
             <div className="row">
-              <button ref={yesRef} className="btn yes" onClick={() => setMode("done")}>
+              <button ref={yesRef} className="btn yes" onClick={() => setMode("game")}>
                 Yes 💘
               </button>
             </div>
           </div>
         </>
+      )}
+
+      {mode === "game" && (
+        <HeartMazeGame onWin={() => setMode("interlude")} />
+      )}
+
+      {mode === "interlude" && (
+        <div className="card hero">
+          <h2>Ce n’est pas encore fini... !</h2>
+          <p className="sub">Un dernier défi t’attend 💘</p>
+          <button className="btn yes" onClick={() => setMode("catch")}> 
+            Continuer
+          </button>
+        </div>
+      )}
+
+      {mode === "catch" && (
+        <CatchHeartsGame onWin={() => setMode("done")} />
       )}
 
       {mode === "done" && (

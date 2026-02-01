@@ -75,7 +75,7 @@ export function useNoButton() {
         y: ny,
         lastX: nx,
         lastY: ny,
-        rotate: s.rotate + rand(-12, 12) * intensity,
+        rotate: rand(-25, 25) * intensity,
         labelIndex: (s.labelIndex + 1) % 10,
       };
     });
@@ -90,8 +90,11 @@ export function useNoButton() {
 
     if (!n.width || !n.height) return;
 
-    const gap = 14;
-    const x = clamp(y.left - p.left + y.width + gap, 16, p.width - n.width - 16);
+    const gap = 80;
+    const pairWidth = y.width + gap + n.width;
+    const desiredCenter = p.width / 2;
+    const yesLeft = desiredCenter - pairWidth / 2;
+    const x = clamp(yesLeft + y.width + gap, 16, p.width - n.width - 16);
     const yy = clamp(y.top - p.top, 16, p.height - n.height - 16);
 
     setState((s) => ({
