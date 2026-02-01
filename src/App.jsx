@@ -9,6 +9,11 @@ import jimmyRemix from "./sounds/Jimmy Remix 1 (High Scores) - WarioWare, Inc._ 
 import driftingAway from "./sounds/Drifting Away D (Instrumental) - WarioWare, Inc._ Mega Microgames! (OST).mp3";
 import dribbleBoss from "./sounds/Dribble Boss 1 - WarioWare, Inc._ Mega Microgames! (OST).mp3";
 import heroesRising from "./sounds/The Heros Rising  (16-Bit Arcade No Copyright Music).mp3";
+import heartMini from "./assets/heart_mini.gif";
+import altEast0 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-4-frames/east/frame_000.png";
+import altEast1 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-4-frames/east/frame_001.png";
+import altEast2 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-4-frames/east/frame_002.png";
+import altEast3 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-4-frames/east/frame_003.png";
 
 export default function App() {
   const pageRef = useRef(null);
@@ -18,6 +23,7 @@ export default function App() {
   const [mode, setMode] = useState("ask");
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [restartLocked, setRestartLocked] = useState(false);
+  const [doneFrame, setDoneFrame] = useState(0);
 
   const labels = useMemo(
     () => [
@@ -110,6 +116,14 @@ export default function App() {
     setRestartLocked(true);
     const t = setTimeout(() => setRestartLocked(false), 3000);
     return () => clearTimeout(t);
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode !== "done") return;
+    const id = setInterval(() => {
+      setDoneFrame((f) => (f + 1) % 4);
+    }, 120);
+    return () => clearInterval(id);
   }, [mode]);
 
   useEffect(() => {
@@ -301,6 +315,18 @@ export default function App() {
           >
             Restart 💞
           </button>
+          <div className="doneChaseRow">
+            <img
+              className="doneRunner"
+              src={[altEast0, altEast1, altEast2, altEast3][doneFrame]}
+              alt="fille rousse"
+            />
+            <img
+              className="doneHeart"
+              src={heartMini}
+              alt="coeur"
+            />
+          </div>
         </div>
       )}
     </div>

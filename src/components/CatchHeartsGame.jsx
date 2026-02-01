@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import adventureBegins from "../sounds/Adventure Begins  (16-Bit Arcade No Copyright Music).mp3";
+import popupShow from "../sounds/popup-show-384945.mp3";
 
 const TARGET = 10;
 const SPAWN_MS = 450;
@@ -10,6 +11,7 @@ export default function CatchHeartsGame({ onWin }) {
   const [score, setScore] = useState(0);
   const idRef = useRef(0);
   const intervalRef = useRef(null);
+  const popRef = useRef([]);
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
@@ -46,6 +48,21 @@ export default function CatchHeartsGame({ onWin }) {
   }, []);
 
   useEffect(() => {
+    const pool = Array.from({ length: 4 }).map(() => {
+      const a = new Audio(popupShow);
+      a.volume = 0.6;
+      return a;
+    });
+    popRef.current = pool;
+    return () => {
+      pool.forEach((a) => {
+        a.pause();
+        a.currentTime = 0;
+      });
+    };
+  }, []);
+
+  useEffect(() => {
     if (score >= TARGET) {
       clearInterval(intervalRef.current);
       onWin();
@@ -53,6 +70,12 @@ export default function CatchHeartsGame({ onWin }) {
   }, [score, onWin]);
 
   function collect(id) {
+    const pool = popRef.current;
+    if (pool.length) {
+      const pick = pool.find((a) => a.paused) || pool[0];
+      pick.currentTime = 0;
+      pick.play().catch(() => {});
+    }
     setHearts((h) => h.filter((x) => x.id !== id));
     setScore((s) => s + 1);
   }
