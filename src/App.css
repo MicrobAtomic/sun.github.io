@@ -60,6 +60,14 @@
   justify-items: center;
 }
 
+.mazeCard h2 {
+  margin-bottom: 4px;
+}
+
+.mazeCard .small {
+  margin-top: 0;
+}
+
 .runnerRow {
   display: flex;
   gap: 16px;
@@ -106,6 +114,139 @@
 .doneHeart {
   width: 60px;
   height: 48px;
+}
+
+.captureCard {
+  gap: 12px;
+  justify-items: center;
+}
+
+.captureArena {
+  position: relative;
+  width: min(420px, 82vw);
+  height: 220px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 240, 246, 0.6);
+  border-radius: 16px;
+  overflow: visible;
+}
+
+.captureOrigin {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 48px;
+  height: 48px;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.captureBall {
+  width: 48px;
+  height: 48px;
+  transition: transform 0.9s ease;
+}
+
+.captureBall.throw {
+  transform: translate(var(--throw-x, 0), var(--throw-y, -135px)) scale(0.95);
+}
+
+.captureBall.success {
+  transform: translate(var(--throw-x, 0), var(--throw-y, -135px)) scale(1.05);
+  animation: capture-shake 0.18s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+.captureBall.success.shakeOn {
+  animation-play-state: running;
+}
+
+.captureStars {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  width: 80px;
+  height: 60px;
+  transform: translateX(40px);
+  pointer-events: none;
+}
+
+.captureStar {
+  position: absolute;
+  font-size: 16px;
+  opacity: 0;
+  animation: capture-star 0.6s ease-out forwards;
+}
+
+.captureStar.s1 { left: 0; top: 18px; }
+.captureStar.s2 { left: 28px; top: 0; }
+.captureStar.s3 { left: 54px; top: 22px; }
+
+.captureTarget {
+  position: absolute;
+  left: 50%;
+  top: 26px;
+  width: 60px;
+  height: 48px;
+  transform: translateX(40px);
+  z-index: 1;
+}
+
+.captureHeart {
+  width: 60px;
+  height: 48px;
+}
+
+.captureArc {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 320px;
+  height: 200px;
+  transform: translateX(-50%);
+  opacity: 0.35;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.captureArc path {
+  fill: none;
+  stroke: rgba(120, 120, 120, 0.8);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+@keyframes capture-shake {
+  0% {
+    transform: translate(var(--throw-x, 0), var(--throw-y, -135px)) rotate(0deg) scale(1.05);
+  }
+  25% {
+    transform: translate(calc(var(--throw-x, 0) - 2px), var(--throw-y, -135px)) rotate(-6deg) scale(1.05);
+  }
+  50% {
+    transform: translate(calc(var(--throw-x, 0) + 2px), var(--throw-y, -135px)) rotate(6deg) scale(1.05);
+  }
+  75% {
+    transform: translate(calc(var(--throw-x, 0) - 1px), var(--throw-y, -135px)) rotate(-4deg) scale(1.05);
+  }
+  100% {
+    transform: translate(var(--throw-x, 0), var(--throw-y, -135px)) rotate(0deg) scale(1.05);
+  }
+}
+
+@keyframes capture-star {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+  }
 }
 
 .maze {
@@ -291,8 +432,9 @@
 }
 
 .heartBomb {
-  width: 120px;
-  height: 120px;
+  width: 280px;
+  height: 170px;
+  pointer-events: none;
   object-fit: contain;
   image-rendering: pixelated;
 }

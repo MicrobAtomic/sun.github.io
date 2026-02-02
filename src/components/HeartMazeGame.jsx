@@ -217,6 +217,7 @@ export default function HeartMazeGame({ onWin }) {
     return (
       <div className="card hero mazeCard">
         <h2>Choisis ton personnage</h2>
+        <p className="small">Si tu veux être ma valentine il va falloir capturer mon cœur...</p>
         <div className="runnerRow">
           <button className="runnerCard" onClick={() => setSelectedSprite("default")}>
             <img className="runner" src={previewDefault} alt="runner default" />

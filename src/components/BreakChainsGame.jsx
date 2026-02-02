@@ -5,7 +5,6 @@ import chestGif from "../assets/chest.gif";
 import chestFrame00 from "../assets/frame_00_delay-0.5s.gif";
 import chestFrame25 from "../assets/frame_25_delay-0.5s.gif";
 import heartMini from "../assets/heart_mini.gif";
-import demonsCrest from "../sounds/Demon's Crest OST_ Metropolis of Ruin.mp3";
 import swordHit1 from "../sounds/rpg-sword-attack-combo19-388939.mp3";
 import swordHit2 from "../sounds/rpg-sword-attack-combo-22-388940.mp3";
 import swordHit3 from "../sounds/rpg-sword-attack-combo-24-388941.mp3";
@@ -14,9 +13,10 @@ import heroSkillAttack from "../sounds/hero-skill-attack-reveal-3-384974.mp3";
 import woodenTrunk from "../sounds/wooden-trunk-latch-2-183945.mp3";
 import metalChain1 from "../sounds/metal-chain-01-64045-[AudioTrimmer.com].mp3";
 import metalChain2 from "../sounds/metal-chain-01-64045-[AudioTrimmer.com] (1).mp3";
+import lockDoor from "../sounds/locking-the-door-45443-[AudioTrimmer.com].mp3";
 
 const CHAIN_DURATION_MS = 20000;
-const MAX_CHAINS = 12;
+const MAX_CHAINS = 16;
 const CHESTS = 3;
 const GUARD_HITS = 20;
 const GUARD_DURATION_MS = 5000;
@@ -70,6 +70,7 @@ export default function BreakChainsGame({ onWin }) {
   const dragonHeartRef = useRef(null);
   const chestOpenRef = useRef(null);
   const chainHitRef = useRef([]);
+  const lockDoorRef = useRef(null);
   const guardDeadlineRef = useRef(0);
   const toolRef = useRef(
     TOOLS.reduce((acc, t) => {
@@ -96,18 +97,6 @@ export default function BreakChainsGame({ onWin }) {
     makeStatic(chestFrame00, setChestFrame00Static);
     makeStatic(chestFrame25, setChestFrame25Static);
   }, []);
-  useEffect(() => {
-    const audio = new Audio(demonsCrest);
-    audio.loop = true;
-    audio.volume = 0.45;
-    audio.currentTime = 2;
-    audio.play().catch(() => {});
-    return () => {
-      audio.pause();
-      audio.currentTime = 0;
-    };
-  }, []);
-
   useEffect(() => {
     const hits = [new Audio(swordHit1), new Audio(swordHit2), new Audio(swordHit3)];
     hits.forEach((a) => {
@@ -145,6 +134,16 @@ export default function BreakChainsGame({ onWin }) {
         a.pause();
         a.currentTime = 0;
       });
+    };
+  }, []);
+
+  useEffect(() => {
+    const a = new Audio(lockDoor);
+    a.volume = 0.5;
+    lockDoorRef.current = a;
+    return () => {
+      a.pause();
+      a.currentTime = 0;
     };
   }, []);
 
@@ -527,6 +526,10 @@ export default function BreakChainsGame({ onWin }) {
                   className="lockOverlay"
                   onClick={() => {
                     if (!lockCanUnlock) return;
+                    if (lockDoorRef.current) {
+                      lockDoorRef.current.currentTime = 0;
+                      lockDoorRef.current.play().catch(() => {});
+                    }
                     setLockActive(false);
                     setLockCanUnlock(false);
                     setLockTimeLeft(0);
