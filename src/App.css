@@ -99,21 +99,39 @@
 
 .doneChaseRow {
   margin-top: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
+  position: relative;
+  width: min(420px, 90vw);
+  height: 96px;
+  border-radius: 14px;
+  background: #ffffff;
+  overflow: hidden;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .doneRunner {
-  width: 56px;
-  height: 56px;
+  width: 76px;
+  height: 76px;
   image-rendering: pixelated;
+  position: absolute;
+  z-index: 2;
 }
 
 .doneHeart {
-  width: 60px;
-  height: 48px;
+  width: 84px;
+  height: 66px;
+  position: absolute;
+  z-index: 1;
+}
+
+.doneBurger {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  image-rendering: pixelated;
+  z-index: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
 }
 
 .captureCard {
@@ -347,6 +365,7 @@
 .mazePlayer .playerSpriteAlt {
   transform: none;
 }
+
 
 .catchArea {
   width: 100%;

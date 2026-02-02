@@ -152,6 +152,7 @@ export default function HeartMazeGame({ onWin }) {
     return () => cancelAnimationFrame(moveRafRef.current);
   }, []);
 
+
   useEffect(() => {
     if (!selectedSprite) return;
 

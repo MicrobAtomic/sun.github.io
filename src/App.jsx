@@ -16,6 +16,35 @@ import altEast0 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunette
 import altEast1 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-4-frames/east/frame_001.png";
 import altEast2 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-4-frames/east/frame_002.png";
 import altEast3 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-4-frames/east/frame_003.png";
+import jumpEast0 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-jump/east/frame_000.png";
+import jumpEast1 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-jump/east/frame_001.png";
+import jumpEast2 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-jump/east/frame_002.png";
+import jumpEast3 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-jump/east/frame_003.png";
+import jumpEast4 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-jump/east/frame_004.png";
+import jumpEast5 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-jump/east/frame_005.png";
+import jumpEast6 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-jump/east/frame_006.png";
+import jumpEast7 from "./assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-jump/east/frame_007.png";
+import burger1 from "./assets/burger/burger1.png";
+import burger2 from "./assets/burger/burger2.png";
+import burger3 from "./assets/burger/burger3.png";
+import burger4 from "./assets/burger/burger4.png";
+
+const DONE_WIDTH = 420;
+const DONE_HEIGHT = 96;
+const DONE_PLAYER_X = 54;
+const DONE_PLAYER_Y = 18;
+const DONE_PLAYER_W = 76;
+const DONE_PLAYER_H = 76;
+const DONE_HEART_X = 300;
+const DONE_HEART_Y = 18;
+const DONE_BURGER_MIN_MS = 1800;
+const DONE_BURGER_MAX_MS = 3200;
+const DONE_BURGER_SPEED = 140;
+const DONE_JUMP_RANGE = 12;
+const DONE_BURGER_MIN_GAP = 120;
+const DONE_BURGER_MAX_COUNT = 2;
+const DONE_BURGER_SIZE = 30;
+const DONE_JUMP_COOLDOWN_MS = 420;
 
 export default function App() {
   const pageRef = useRef(null);
@@ -27,6 +56,14 @@ export default function App() {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [restartLocked, setRestartLocked] = useState(false);
   const [doneFrame, setDoneFrame] = useState(0);
+  const [doneBurgers, setDoneBurgers] = useState([]);
+  const [doneJumping, setDoneJumping] = useState(false);
+  const [doneJumpFrame, setDoneJumpFrame] = useState(0);
+  const doneBurgersRef = useRef([]);
+  const doneBurgerRafRef = useRef(0);
+  const doneBurgerTimerRef = useRef(0);
+  const doneJumpingRef = useRef(false);
+  const doneJumpCooldownRef = useRef(0);
 
   const labels = useMemo(
     () => [
@@ -63,7 +100,7 @@ export default function App() {
   useEffect(() => {
     function jump(e) {
       if (e.key.toLowerCase() === "p") {
-        setMode("capture");
+        setMode("done");
       }
     }
     window.addEventListener("keydown", jump);
@@ -157,6 +194,122 @@ export default function App() {
     }, 120);
     return () => clearInterval(id);
   }, [mode]);
+
+  useEffect(() => {
+    doneBurgersRef.current = doneBurgers;
+  }, [doneBurgers]);
+
+  useEffect(() => {
+    if (mode !== "done") {
+      setDoneBurgers([]);
+      setDoneJumping(false);
+      setDoneJumpFrame(0);
+      doneJumpingRef.current = false;
+      return;
+    }
+
+    const burgerImages = [burger1, burger2, burger3, burger4];
+
+    function scheduleNext() {
+      const delay =
+        DONE_BURGER_MIN_MS + Math.random() * (DONE_BURGER_MAX_MS - DONE_BURGER_MIN_MS);
+      doneBurgerTimerRef.current = window.setTimeout(spawnBurger, delay);
+    }
+
+    function spawnBurger() {
+      if (doneBurgersRef.current.length >= DONE_BURGER_MAX_COUNT) {
+        scheduleNext();
+        return;
+      }
+      const minX = DONE_PLAYER_X + DONE_PLAYER_W + 40;
+      const maxX = DONE_HEART_X - 32;
+      let startX = minX + Math.random() * Math.max(1, maxX - minX);
+      const tries = 6;
+      for (let i = 0; i < tries; i += 1) {
+        const tooClose = doneBurgersRef.current.some(
+          (b) => Math.abs(b.x - startX) < DONE_BURGER_MIN_GAP
+        );
+        if (!tooClose) break;
+        startX = minX + Math.random() * Math.max(1, maxX - minX);
+      }
+      const stillClose = doneBurgersRef.current.some(
+        (b) => Math.abs(b.x - startX) < DONE_BURGER_MIN_GAP
+      );
+      if (stillClose) {
+        scheduleNext();
+        return;
+      }
+      const startY = DONE_PLAYER_Y + 43;
+      const img = burgerImages[Math.floor(Math.random() * burgerImages.length)];
+      const id = `${Date.now()}-${Math.random()}`;
+      setDoneBurgers((prev) => [
+        ...prev,
+        { id, x: startX, y: startY, img, lastTs: performance.now() },
+      ]);
+      scheduleNext();
+    }
+
+    function animateBurgers(now) {
+      setDoneBurgers((prev) =>
+        prev
+          .map((b) => {
+            const dt = Math.min(50, now - (b.lastTs || now));
+            const nx = b.x - (DONE_BURGER_SPEED * dt) / 1000;
+            return { ...b, x: nx, lastTs: now };
+          })
+          .filter((b) => b.x > -40)
+      );
+
+      const px = DONE_PLAYER_X + DONE_PLAYER_W * 0.5;
+      const py = DONE_PLAYER_Y + DONE_PLAYER_H * 0.7;
+      const closeBurger = doneBurgersRef.current.find((b) => {
+        const withinLane = Math.abs(b.y - py) < 14;
+        const passedPlayer = b.x < px + 12;
+        const inRange = Math.abs(b.x - px) < DONE_JUMP_RANGE + DONE_BURGER_SIZE * 0.5;
+        return withinLane && passedPlayer && inRange;
+      });
+      const nowMs = performance.now();
+      if (
+        closeBurger &&
+        !doneJumpingRef.current &&
+        nowMs - doneJumpCooldownRef.current > DONE_JUMP_COOLDOWN_MS
+      ) {
+        doneJumpingRef.current = true;
+        doneJumpCooldownRef.current = nowMs;
+        setDoneJumping(true);
+        setDoneJumpFrame(0);
+      }
+
+      doneBurgerRafRef.current = requestAnimationFrame(animateBurgers);
+    }
+
+    scheduleNext();
+    spawnBurger();
+    doneBurgerRafRef.current = requestAnimationFrame(animateBurgers);
+
+    return () => {
+      window.clearTimeout(doneBurgerTimerRef.current);
+      cancelAnimationFrame(doneBurgerRafRef.current);
+    };
+  }, [mode]);
+
+  useEffect(() => {
+    if (!doneJumping) return;
+    const frames = 8;
+    let frame = 0;
+    const id = window.setInterval(() => {
+      frame += 1;
+      if (frame >= frames) {
+        window.clearInterval(id);
+        doneJumpingRef.current = false;
+        setDoneJumping(false);
+        setDoneJumpFrame(0);
+        return;
+      }
+      setDoneJumpFrame(frame);
+    }, 60);
+    return () => window.clearInterval(id);
+  }, [doneJumping]);
 
   useEffect(() => {
     if (mode !== "done") return;
@@ -352,13 +505,37 @@ export default function App() {
             Restart 💞
           </button>
           <div className="doneChaseRow">
+            {doneBurgers.map((b) => (
+              <img
+                key={b.id}
+                src={b.img}
+                alt="burger"
+                className="doneBurger"
+                style={{ left: `${b.x}px`, top: `${b.y}px` }}
+              />
+            ))}
             <img
               className="doneRunner"
-              src={[altEast0, altEast1, altEast2, altEast3][doneFrame]}
+              style={{ left: `${DONE_PLAYER_X}px`, top: `${DONE_PLAYER_Y}px` }}
+              src={
+                doneJumping
+                  ? [
+                      jumpEast0,
+                      jumpEast1,
+                      jumpEast2,
+                      jumpEast3,
+                      jumpEast4,
+                      jumpEast5,
+                      jumpEast6,
+                      jumpEast7,
+                    ][doneJumpFrame]
+                  : [altEast0, altEast1, altEast2, altEast3][doneFrame]
+              }
               alt="fille rousse"
             />
             <img
               className="doneHeart"
+              style={{ left: `${DONE_HEART_X}px`, top: `${DONE_HEART_Y}px` }}
               src={heartMini}
               alt="coeur"
             />

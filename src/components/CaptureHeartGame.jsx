@@ -204,7 +204,6 @@ export default function CaptureHeartGame({ onWin }) {
   return (
     <div className="card hero captureCard">
       <h2>Capture le cœur 💘</h2>
-      <p className="sub">Aligne l’arc gris avec le cœur puis appuie pour lancer.</p>
 
       <div className="captureArena">
         <div className="captureOrigin">
