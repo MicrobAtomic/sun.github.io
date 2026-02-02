@@ -26,8 +26,9 @@ export default function CaptureHeartGame({ onWin }) {
   const [captureDone, setCaptureDone] = useState(false);
   const [wiggleArmed, setWiggleArmed] = useState(false);
   const rafRef = useRef(0);
-  const wiggleRef = useRef(null);
-  const clickRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const buffersRef = useRef({ wiggle: null, click: null });
+  const wiggleSourceRef = useRef(null);
 
   const targetSweep = useMemo(() => HEART_LOCK.x / THROW_X_SCALE, []);
 
@@ -63,8 +64,33 @@ export default function CaptureHeartGame({ onWin }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [dir]);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function setupAudio() {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current;
+      const [wiggleBuf, clickBuf] = await Promise.all([
+        fetch(pokeWiggle).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)),
+        fetch(clickSfx).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)),
+      ]);
+      if (!cancelled) {
+        buffersRef.current = { wiggle: wiggleBuf, click: clickBuf };
+      }
+    }
+
+    setupAudio().catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleThrow = useCallback(() => {
     if (thrown || success) return;
+    if (audioCtxRef.current?.state === "suspended") {
+      audioCtxRef.current.resume().catch(() => {});
+    }
     setThrown(true);
     const throwX = sweep * THROW_X_SCALE;
     const throwY = THROW_Y_BASE - Math.abs(sweep - targetSweep) * THROW_Y_SWEEP;
@@ -74,11 +100,6 @@ export default function CaptureHeartGame({ onWin }) {
     const diff = Math.abs(sweep - targetSweep);
     if (dx <= HIT_TOLERANCE_PX && dy <= HIT_TOLERANCE_PX && diff <= 0.6) {
       setThrowOffset(HEART_LOCK);
-      if (!wiggleRef.current) {
-        const a = new Audio(pokeWiggle);
-        a.volume = 1;
-        wiggleRef.current = a;
-      }
       setWiggleArmed(true);
       setTimeout(() => {
         setSuccess(true);
@@ -101,13 +122,37 @@ export default function CaptureHeartGame({ onWin }) {
 
   useEffect(() => {
     if (!success || !wiggleArmed) return;
-    const wiggle = wiggleRef.current;
-    if (!clickRef.current) {
-      const a = new Audio(clickSfx);
-      a.volume = 1;
-      clickRef.current = a;
+    const ctx = audioCtxRef.current;
+    const buffers = buffersRef.current;
+
+    function playBuffer(name, gainValue = 1) {
+      if (!ctx || !buffers[name]) return null;
+      const src = ctx.createBufferSource();
+      src.buffer = buffers[name];
+      const gain = ctx.createGain();
+      gain.gain.value = gainValue;
+      src.connect(gain).connect(ctx.destination);
+      src.start(0);
+      return src;
     }
-    const click = clickRef.current;
+
+    function startWiggle() {
+      if (wiggleSourceRef.current) {
+        try {
+          wiggleSourceRef.current.stop();
+        } catch {}
+      }
+      wiggleSourceRef.current = playBuffer("wiggle", 1.4);
+    }
+
+    function stopWiggle() {
+      if (wiggleSourceRef.current) {
+        try {
+          wiggleSourceRef.current.stop();
+        } catch {}
+        wiggleSourceRef.current = null;
+      }
+    }
     setShakeOn(false);
     setShowStars(false);
     setCaptureDone(false);
@@ -118,30 +163,18 @@ export default function CaptureHeartGame({ onWin }) {
 
     function runCycle() {
       if (cycle >= 3) {
-        if (wiggle) {
-          wiggle.pause();
-          wiggle.currentTime = 0;
-        }
+        stopWiggle();
         setShowStars(true);
-        if (click) {
-          click.currentTime = 0;
-          click.play().catch(() => {});
-        }
+        playBuffer("click", 1.6);
         setCaptureDone(true);
         t3 = setTimeout(() => setShowStars(false), 700);
         return;
       }
       setShakeOn(true);
-      if (wiggle) {
-        wiggle.currentTime = 0;
-        wiggle.play().catch(() => {});
-      }
+      startWiggle();
       t1 = setTimeout(() => {
         setShakeOn(false);
-        if (wiggle) {
-          wiggle.pause();
-          wiggle.currentTime = 0;
-        }
+        stopWiggle();
         t2 = setTimeout(() => {
           cycle += 1;
           runCycle();
@@ -151,14 +184,7 @@ export default function CaptureHeartGame({ onWin }) {
 
     runCycle();
     return () => {
-      if (wiggle) {
-        wiggle.pause();
-        wiggle.currentTime = 0;
-      }
-      if (click) {
-        click.pause();
-        click.currentTime = 0;
-      }
+      stopWiggle();
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
@@ -167,15 +193,10 @@ export default function CaptureHeartGame({ onWin }) {
 
   useEffect(() => {
     return () => {
-      const wiggle = wiggleRef.current;
-      const click = clickRef.current;
-      if (wiggle) {
-        wiggle.pause();
-        wiggle.currentTime = 0;
-      }
-      if (click) {
-        click.pause();
-        click.currentTime = 0;
+      if (wiggleSourceRef.current) {
+        try {
+          wiggleSourceRef.current.stop();
+        } catch {}
       }
     };
   }, []);

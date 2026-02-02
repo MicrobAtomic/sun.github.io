@@ -36,6 +36,11 @@ import altNorth2 from "../assets/caractere_pokemon_feminin_rousse_avec_des_lunet
 import altNorth3 from "../assets/caractere_pokemon_feminin_rousse_avec_des_lunettes/animations/running-4-frames/north/frame_003.png";
 
 const TILE = 36;
+const GAP = 2;
+const PADDING = 8;
+const MOVE_MS = 240;
+const MOVE_FRAMES = 3;
+const INPUT_BUFFER_MS = 200;
 
 const MAZE = [
   "###############",
@@ -54,14 +59,6 @@ const MAZE = [
   "#..#......###.#",
   "###############",
 ];
-
-function findChar(grid, ch) {
-  for (let r = 0; r < grid.length; r += 1) {
-    const c = grid[r].indexOf(ch);
-    if (c !== -1) return { r, c };
-  }
-  return null;
-}
 
 export default function HeartMazeGame({ onWin }) {
   const grid = useMemo(() => MAZE.map((row) => row.split("")), []);
@@ -90,14 +87,21 @@ export default function HeartMazeGame({ onWin }) {
   const heart = { r: 13, c: 13 };
 
   const [player, setPlayer] = useState(start);
+  const [displayPos, setDisplayPos] = useState(start);
   const [collected, setCollected] = useState(false);
   const [dir, setDir] = useState("down");
   const [step, setStep] = useState(0);
-  const [moving, setMoving] = useState(false);
+  const [animating, setAnimating] = useState(false);
   const [selectedSprite, setSelectedSprite] = useState(null);
   const [previewFrame, setPreviewFrame] = useState(0);
   const audioRef = useRef(null);
   const stepRef = useRef([]);
+  const moveRafRef = useRef(0);
+  const keyDownRef = useRef(false);
+  const desiredDirRef = useRef({ dr: 0, dc: 0, dir: "down" });
+  const lastInputRef = useRef({ dr: 0, dc: 0, dir: "down", time: 0 });
+  const keysDownRef = useRef(new Set());
+  const playerRef = useRef(start);
 
   useEffect(() => {
     if (selectedSprite) return;
@@ -108,16 +112,13 @@ export default function HeartMazeGame({ onWin }) {
   }, [selectedSprite]);
 
   useEffect(() => {
-    if (!moving) return;
-    const id = setInterval(() => {
-      setStep((s) => (s + 1) % 4);
-    }, 120);
-    return () => clearInterval(id);
-  }, [moving]);
-
-  useEffect(() => {
     if (collected) onWin();
   }, [collected, onWin]);
+
+  useEffect(() => {
+    playerRef.current = player;
+    if (!animating) setDisplayPos(player);
+  }, [player, animating]);
 
   useEffect(() => {
     const audio = new Audio(mazeSound);
@@ -148,59 +149,120 @@ export default function HeartMazeGame({ onWin }) {
   }, []);
 
   useEffect(() => {
+    return () => cancelAnimationFrame(moveRafRef.current);
+  }, []);
+
+  useEffect(() => {
     if (!selectedSprite) return;
-    function handleKey(e) {
+
+    function attemptMove(dr, dc, nextDir) {
       if (collected) return;
+      if (animating) return;
+      const current = playerRef.current;
+      const nr = current.r + dr;
+      const nc = current.c + dc;
+      if (grid[nr]?.[nc] === "#") {
+        desiredDirRef.current = { dr: 0, dc: 0, dir: nextDir };
+        lastInputRef.current = { dr: 0, dc: 0, dir: nextDir, time: performance.now() };
+        return;
+      }
+
+      setDir(nextDir);
+
+      const pool = stepRef.current;
+      if (pool.length) {
+        const pick = pool.find((a) => a.paused) || pool[0];
+        pick.currentTime = 0;
+        pick.playbackRate = 1.2;
+        pick.play().catch(() => {});
+        setTimeout(() => {
+          pick.pause();
+          pick.currentTime = 0;
+        }, 650);
+      }
+
+      const from = { r: current.r, c: current.c };
+      const to = { r: nr, c: nc };
+      setAnimating(true);
+      const startTime = performance.now();
+
+      function animate(now) {
+        const t = Math.min(1, (now - startTime) / MOVE_MS);
+        const r = from.r + (to.r - from.r) * t;
+        const c = from.c + (to.c - from.c) * t;
+        setDisplayPos({ r, c });
+        const frame = Math.min(MOVE_FRAMES - 1, Math.floor(t * MOVE_FRAMES));
+        setStep(frame);
+        if (t < 1) {
+          moveRafRef.current = requestAnimationFrame(animate);
+        } else {
+          setDisplayPos(to);
+          playerRef.current = to;
+          setPlayer(to);
+          setAnimating(false);
+          setStep(0);
+          if (to.r === heart.r && to.c === heart.c) {
+            setCollected(true);
+          }
+          const { dr: nd, dc: nc2, dir: ndir } = desiredDirRef.current;
+          const now = performance.now();
+          const shouldBufferMove =
+            (nd || nc2) &&
+            (keyDownRef.current || now - lastInputRef.current.time < INPUT_BUFFER_MS);
+          if (shouldBufferMove) {
+            attemptMove(nd, nc2, ndir);
+          }
+        }
+      }
+
+      moveRafRef.current = requestAnimationFrame(animate);
+    }
+
+    function handleKey(e) {
       const key = e.key.toLowerCase();
       let dr = 0;
       let dc = 0;
+      let nextDir = dir;
       if (key === "arrowup" || key === "w") {
         dr = -1;
-        setDir("up");
+        nextDir = "up";
       }
       if (key === "arrowdown" || key === "s") {
         dr = 1;
-        setDir("down");
+        nextDir = "down";
       }
       if (key === "arrowleft" || key === "a") {
         dc = -1;
-        setDir("left");
+        nextDir = "left";
       }
       if (key === "arrowright" || key === "d") {
         dc = 1;
-        setDir("right");
+        nextDir = "right";
       }
       if (!dr && !dc) return;
-
       e.preventDefault();
-      setMoving(true);
-
-      setPlayer((p) => {
-        const nr = p.r + dr;
-        const nc = p.c + dc;
-        if (grid[nr]?.[nc] === "#") return p;
-        const pool = stepRef.current;
-        if (pool.length) {
-          const pick = pool.find((a) => a.paused) || pool[0];
-          pick.currentTime = 0;
-          pick.playbackRate = 1.2;
-          pick.play().catch(() => {});
-          setTimeout(() => {
-            pick.pause();
-            pick.currentTime = 0;
-          }, 650);
-        }
-        const next = { r: nr, c: nc };
-        if (nr === heart.r && nc === heart.c) {
-          setCollected(true);
-        }
-        setStep((s) => (s + 1) % 4);
-        return next;
-      });
+      keysDownRef.current.add(key);
+      keyDownRef.current = keysDownRef.current.size > 0;
+      desiredDirRef.current = { dr, dc, dir: nextDir };
+      lastInputRef.current = { dr, dc, dir: nextDir, time: performance.now() };
+      attemptMove(dr, dc, nextDir);
     }
 
-    function handleKeyUp() {
-      setMoving(false);
+    function handleKeyUp(e) {
+      const key = e.key.toLowerCase();
+      if (
+        key === "arrowup" ||
+        key === "w" ||
+        key === "arrowdown" ||
+        key === "s" ||
+        key === "arrowleft" ||
+        key === "a" ||
+        key === "arrowright" ||
+        key === "d"
+      ) {
+        keysDownRef.current.delete(key);
+        keyDownRef.current = keysDownRef.current.size > 0;
+      }
     }
 
     window.addEventListener("keydown", handleKey, { passive: false });
@@ -209,7 +271,7 @@ export default function HeartMazeGame({ onWin }) {
       window.removeEventListener("keydown", handleKey);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [grid, heart, collected]);
+  }, [grid, heart, collected, animating, player, selectedSprite, dir]);
 
   if (!selectedSprite) {
     const previewDefault = defaultSprites.right[previewFrame];
@@ -233,6 +295,8 @@ export default function HeartMazeGame({ onWin }) {
   }
 
   const activeSprites = selectedSprite === "alt" ? altSprites : defaultSprites;
+  const frame = step;
+  const spriteSrc = activeSprites[dir][frame];
 
   return (
     <div className="card hero mazeCard">
@@ -247,23 +311,12 @@ export default function HeartMazeGame({ onWin }) {
         {grid.map((row, r) =>
           row.map((cell, c) => {
             const isWall = cell === "#";
-            const isPlayer = player.r === r && player.c === c;
             const isHeart = heart.r === r && heart.c === c && !collected;
-
-            const frame = step;
-            const spriteSrc = activeSprites[dir][frame];
 
             return (
               <div key={`${r}-${c}`} className="tile">
                 <div className="ground" />
                 {isWall && <div className="wall" />}
-                {isPlayer && (
-                  <img
-                    className={`playerSprite ${selectedSprite === "alt" ? "playerSpriteAlt" : ""}`}
-                    src={spriteSrc}
-                    alt="player"
-                  />
-                )}
                 {isHeart && (
                   <img
                     className="heartSprite"
@@ -275,9 +328,20 @@ export default function HeartMazeGame({ onWin }) {
             );
           })
         )}
+        <div
+          className="mazePlayer"
+          style={{
+            left: `${PADDING + displayPos.c * (TILE + GAP)}px`,
+            top: `${PADDING + displayPos.r * (TILE + GAP)}px`,
+          }}
+        >
+          <img
+            className={selectedSprite === "alt" ? "playerSprite playerSpriteAlt" : "playerSprite"}
+            src={spriteSrc}
+            alt="player"
+          />
+        </div>
       </div>
-
-      {!collected && <p className="small"></p>}
     </div>
   );
 }

@@ -256,6 +256,7 @@
   border-radius: 16px;
   background: #cfe9c4;
   border: 2px solid rgba(0,0,0,0.08);
+  position: relative;
 }
 
 .tile {
@@ -330,6 +331,21 @@
   image-rendering: pixelated;
   position: relative;
   z-index: 2;
+}
+
+.mazePlayer {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.mazePlayer .playerSprite,
+.mazePlayer .playerSpriteAlt {
+  transform: none;
 }
 
 .catchArea {
